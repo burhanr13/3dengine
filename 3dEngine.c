@@ -36,6 +36,11 @@ vec3 crossProduct(vec3 a, vec3 b)
     return (vec3){a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
 }
 
+int isVectorZero(vec3 a)
+{
+    return a.x == 0.0f && a.y == 0.0f && a.z == 0.0f;
+}
+
 vec3 normalize(vec3 a)
 {
     return vecScalarMult(a, 1 / sqrtf(a.x * a.x + a.y * a.y + a.z * a.z));
@@ -56,6 +61,18 @@ vec3 vectorRotate(vec3 a, vec3 rot)
     return out;
 }
 
+tri rotateTriangle(tri t, vec3 rot)
+{
+    tri out = t;
+    out.a = vectorRotate(t.a, rot);
+    out.an = vectorRotate(t.an, rot);
+    out.b = vectorRotate(t.b, rot);
+    out.bn = vectorRotate(t.bn, rot);
+    out.c = vectorRotate(t.c, rot);
+    out.cn = vectorRotate(t.cn, rot);
+    return out;
+}
+
 vec3 transformVector(vec3 in, Camera c)
 {
     vec3 out = vectorSubtract(in, c.pos);
@@ -64,7 +81,11 @@ vec3 transformVector(vec3 in, Camera c)
 
 tri transformTriangle(tri t, Camera c)
 {
-    return (tri){transformVector(t.a, c), transformVector(t.b, c), transformVector(t.c, c)};
+    tri out = t;
+    out.a = transformVector(t.a, c);
+    out.b = transformVector(t.b, c);
+    out.c = transformVector(t.c, c);
+    return out;
 }
 
 vec3 projectVector(vec3 in, float a, float f)
@@ -76,12 +97,23 @@ vec3 projectVector(vec3 in, float a, float f)
 
 tri projectTriangle(tri in, float a, float f)
 {
-    return (tri){projectVector(in.a, a, f), projectVector(in.b, a, f), projectVector(in.c, a, f)};
+    tri out = in;
+    out.a = projectVector(in.a, a, f);
+    out.b = projectVector(in.b, a, f);
+    out.c = projectVector(in.c, a, f);
+    return out;
 }
 
 vec3 calculateNormal(tri t)
 {
-    return normalize(crossProduct(vectorSubtract(t.b, t.a), vectorSubtract(t.c, t.a)));
+    return normalize(crossProduct(vectorSubtract(t.c, t.a), vectorSubtract(t.b, t.a)));
+}
+
+float signed2dArea(tri t)
+{
+    vec3 a = vectorSubtract(t.c, t.a);
+    vec3 b = vectorSubtract(t.b, t.a);
+    return a.x * b.y - a.y * b.x;
 }
 
 void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3)
@@ -102,12 +134,57 @@ int compTri(const void *a, const void *b)
     return (int)(nz - mz);
 }
 
-void renderMesh(tri *mesh, int n, Camera c)
+float calculateLighting(vec3 p, vec3 n, vec3 l, tri *mesh, int nTris){
+    
+    float dp = dotProduct(n, l);
+    vec3 tn;
+
+    float t;
+    vec3 pTri;
+
+    for (int i = 0; i < nTris;i++){
+        tn = calculateNormal(mesh[i]);
+        t = -dotProduct(vectorSubtract(p, mesh[i].a), tn) / dotProduct(vectorNegate(l), tn);
+        if(t * dp > 0)
+            continue;
+
+        pTri = vectorAdd(p, vecScalarMult(l, -t));
+        
+    }
+}
+
+void calculateVertexColors(tri *mesh, int n, vec3 lightDir){
+    
+    lightDir = normalize(lightDir);
+    float shade;
+
+    for (int i = 0; i < n; i++){
+
+        if (!isVectorZero(mesh[i].an))
+        {
+            shade = (1 - dotProduct(mesh[i].an, lightDir)) / 2;
+            mesh[i].ac = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
+            shade = (1 - dotProduct(mesh[i].bn, lightDir)) / 2;
+            mesh[i].bc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
+            shade = (1 - dotProduct(mesh[i].cn, lightDir)) / 2;
+            mesh[i].cc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
+        }
+        else
+        {
+            shade = (1 - dotProduct(calculateNormal(mesh[i]), lightDir)) / 2;
+            mesh[i].ac = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
+            mesh[i].bc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
+            mesh[i].cc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
+        }
+    }
+}
+
+void renderMesh(tri *mesh, int n, Camera c, SDL_Texture *tex)
 {
 
     tri triProj;
-    vec3 norm;
-    vec3 lightDir = normalize((vec3){-1, 0, -0.5});
+    float area;
+    vec3 lightDir = normalize((vec3){-1, -1, -0.5});
     float shade;
 
     SDL_FPoint pts[3];
@@ -121,12 +198,10 @@ void renderMesh(tri *mesh, int n, Camera c)
 
         triProj = projectTriangle(transformTriangle(mesh[i], c), ASPECT_RATIO, c.f);
 
-        norm = calculateNormal(triProj);
-        if (norm.z > 0 || triProj.a.z < 0 || triProj.b.z < 0 || triProj.c.z < 0)
+        area = signed2dArea(triProj);
+        if (area < 0 || triProj.a.z < 0 || triProj.b.z < 0 || triProj.c.z < 0)
             continue;
 
-        shade = (dotProduct(calculateNormal(mesh[i]), lightDir) + 1) / 2;
-        triProj.color = (SDL_Color){30 * shade, 100 * shade, 255 * shade, 0xff};
         toDraw[drawCount] = triProj;
         drawCount++;
     }
@@ -140,12 +215,11 @@ void renderMesh(tri *mesh, int n, Camera c)
         pts[1] = (SDL_FPoint){(toDraw[i].b.x + 1) * SCREEN_WIDTH / 2, (1 - toDraw[i].b.y) * SCREEN_HEIGHT / 2};
         pts[2] = (SDL_FPoint){(toDraw[i].c.x + 1) * SCREEN_WIDTH / 2, (1 - toDraw[i].c.y) * SCREEN_HEIGHT / 2};
 
-        for (int j = 0; j < 3; j++)
-        {
-            vts[j] = (SDL_Vertex){pts[j], toDraw[i].color, {}};
-        }
+        vts[0] = (SDL_Vertex){pts[0], toDraw[i].ac, {toDraw[i].at.u,toDraw[i].at.v}};
+        vts[1] = (SDL_Vertex){pts[1], toDraw[i].bc, {toDraw[i].bt.u, toDraw[i].bt.v}};
+        vts[2] = (SDL_Vertex){pts[2], toDraw[i].cc, {toDraw[i].ct.u, toDraw[i].ct.v}};
 
-        SDL_RenderGeometry(renderer, NULL, vts, 3, NULL, 0);
+        SDL_RenderGeometry(renderer, tex, vts, 3, NULL, 0);
 
         SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
         // drawTriangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y);
@@ -157,27 +231,84 @@ int loadObj(char *filename, tri *mesh, int n)
 {
     FILE *f = fopen(filename, "r");
 
-    vec3 vts[n];
+    vec3 v[n];
+    vec2 vt[n];
+    vec3 vn[n];
     int vcount = 0;
+    int vtcount = 0;
+    int vncount = 0;
     int tcount = 0;
 
-    int inda, indb, indc;
+    int inda = 0, indb = 0, indc = 0, indd = 0;
+    int indta = 0, indtb = 0, indtc = 0, indtd = 0;
+    int indna = 0, indnb = 0, indnc = 0, indnd = 0;
+    int nverts;
 
     char buf[255];
     char w[5];
-    while (fgets(buf, 255, f) && vcount < n && tcount < n)
+    while (fgets(buf, 255, f) && vcount < n && vtcount < n && vncount < n && tcount < n)
     {
         sscanf(buf, "%s", w);
         if (!strcmp(w, "v"))
         {
-            sscanf(buf, "v %f %f %f", &vts[vcount].x, &vts[vcount].y, &vts[vcount].z);
+            sscanf(buf, "v %f %f %f", &v[vcount].x, &v[vcount].y, &v[vcount].z);
             vcount++;
+        }
+        else if (!strcmp(w, "vt"))
+        {
+            sscanf(buf, "vt %f %f", &vt[vtcount].u, &vt[vtcount].v);
+            // vt[vtcount].u = fmodf(fmodf(vt[vtcount].u, 1) + 1, 1);
+            // vt[vtcount].v = fmodf(fmodf(vt[vtcount].v, 1) + 1, 1);
+            vtcount++;
+        }
+        else if (!strcmp(w, "vn"))
+        {
+            sscanf(buf, "vn %f %f %f", &vn[vncount].x, &vn[vncount].y, &vn[vncount].z);
+            vn[vncount] = normalize(vn[vncount]);
+            vncount++;
         }
         else if (!strcmp(w, "f"))
         {
-            sscanf(buf, "f %d %d %d", &inda, &indb, &indc);
-            mesh[tcount] = (tri){vts[inda - 1], vts[indb - 1], vts[indc - 1]};
+            if (vtcount > 0 && vncount > 0)
+            {
+                nverts = sscanf(buf, "f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d", &inda, &indta, &indna,
+                                &indb, &indtb, &indnb,
+                                &indc, &indtc, &indnc,
+                                &indd, &indtd, &indnd);
+                nverts /= 3;
+            }
+            else if (vncount > 0)
+            {
+                nverts = sscanf(buf, "f %d//%d %d//%d %d//%d %d//%d", &inda, &indna,
+                                &indb, &indnb,
+                                &indc, &indnc,
+                                &indd, &indnd);
+                nverts /= 2;
+            }
+            else if (vtcount > 0)
+            {
+                nverts = sscanf(buf, "f %d/%d%*s %d/%d%*s %d/%d%*s %d/%d%*s", &inda, &indta,
+                                &indb, &indtb,
+                                &indc, &indtc,
+                                &indd, &indtd);
+                nverts /= 2;
+            }
+            else
+            {
+                nverts = sscanf(buf, "f %d %d %d %d", &inda, &indb, &indc, &indd);
+            }
+            mesh[tcount] = (tri){v[inda - 1], v[indb - 1], v[indc - 1],
+                                 vt[indta - 1], vt[indtb - 1], vt[indtc - 1],
+                                 vn[indna - 1], vn[indnb - 1], vn[indnc - 1]};
             tcount++;
+
+            if (nverts > 3)
+            {
+                mesh[tcount] = (tri){v[inda - 1], v[indc - 1], v[indd - 1],
+                                     vt[indta - 1], vt[indtc - 1], vt[indtd - 1],
+                                     vn[indna - 1], vn[indnc - 1], vn[indnd - 1]};
+                tcount++;
+            }
         }
     }
 
