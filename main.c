@@ -22,6 +22,8 @@ Camera cam = {{0, 0, -10}, {0, 0, 0}, 2};
 
 int quit = 0;
 
+int frames = 0;
+
 int main(int argc, char *argv[])
 {
     init();
@@ -42,6 +44,10 @@ int main(int argc, char *argv[])
         renderMesh(mesh, nTris, cam, NULL);
 
         SDL_RenderPresent(renderer);
+
+        frames++;
+        printf("%.0f\n", 1000 * (float)frames / SDL_GetTicks64());
+        fflush(stdout);
     }
 
     close();
@@ -54,7 +60,7 @@ void init()
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
-    window = SDL_CreateWindow("Template", SDL_WINDOWPOS_UNDEFINED,
+    window = SDL_CreateWindow("3D Engine", SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
                               SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
