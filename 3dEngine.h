@@ -35,6 +35,7 @@ tri transformTriangle(tri t, Camera c);
 tri projectTriangle(tri in, float a, float f);
 void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
 
+void calculateVertexColors(tri *mesh, int n, vec3 lightDir);
 void renderMesh(tri *mesh, int n, Camera c, SDL_Texture *tex);
 
 int loadObj(char *filename, tri *mesh, int n);

@@ -26,6 +26,11 @@ vec3 vecScalarMult(vec3 a, float b)
     return (vec3){b * a.x, b * a.y, b * a.z};
 }
 
+vec3 vecScalarDiv(vec3 a, float b)
+{
+    return (vec3){a.x / b, a.y / b, a.z / b};
+}
+
 float dotProduct(vec3 a, vec3 b)
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
@@ -134,44 +139,102 @@ int compTri(const void *a, const void *b)
     return (int)(nz - mz);
 }
 
-float calculateLighting(vec3 p, vec3 n, vec3 l, tri *mesh, int nTris){
-    
-    float dp = dotProduct(n, l);
-    vec3 tn;
-
-    float t;
-    vec3 pTri;
-
-    for (int i = 0; i < nTris;i++){
-        tn = calculateNormal(mesh[i]);
-        t = -dotProduct(vectorSubtract(p, mesh[i].a), tn) / dotProduct(vectorNegate(l), tn);
-        if(t * dp > 0)
-            continue;
-
-        pTri = vectorAdd(p, vecScalarMult(l, -t));
-        
+void sort3(float x[4]){
+    if (x[0] > x[1])
+    {
+        x[3] = x[0];
+        x[0] = x[1];
+        x[1] = x[3];
+    }
+    if (x[1] > x[2])
+    {
+        x[3] = x[1];
+        x[1] = x[2];
+        x[2] = x[3];
+    }
+    if (x[0] > x[1])
+    {
+        x[3] = x[0];
+        x[0] = x[1];
+        x[1] = x[3];
     }
 }
 
-void calculateVertexColors(tri *mesh, int n, vec3 lightDir){
-    
+float calculateLighting(vec3 p, vec3 n, vec3 l, tri *mesh, int nTris)
+{
+
+    float dp = dotProduct(n, l);
+    //if(dp>=0)
+        return (1 - dp) / 2;
+
+    vec3 tn;
+
+    int k = 0;
+
+    float t;
+    vec3 pTri;
+    float x[4];
+
+    for (int i = 0; i < nTris; i++)
+    {
+        tn = calculateNormal(mesh[i]);
+        t = -dotProduct(vectorSubtract(p, mesh[i].a), tn) / dotProduct(vectorNegate(l), tn);
+        if (t <= 0)
+            continue;
+
+        pTri = vectorAdd(p, vecScalarMult(l, -t));
+
+        x[0] = mesh[i].a.x;
+        x[1] = mesh[i].b.x;
+        x[2] = mesh[i].c.x;
+        sort3(x);
+
+        if (x[0] > pTri.x || pTri.x > x[2])
+            continue;
+        
+        x[0] = mesh[i].a.y;
+        x[1] = mesh[i].b.y;
+        x[2] = mesh[i].c.y;
+        sort3(x);
+
+        if (x[0] > pTri.y || pTri.y > x[2])
+            continue;
+
+        x[0] = mesh[i].a.z;
+        x[1] = mesh[i].b.z;
+        x[2] = mesh[i].c.z;
+        sort3(x);
+
+        if (x[0] > pTri.z || pTri.z > x[2])
+            continue;
+
+        return 0;
+    }
+
+    return (1 - dp) / 2;
+}
+
+void calculateVertexColors(tri *mesh, int n, vec3 lightDir)
+{
+
     lightDir = normalize(lightDir);
     float shade;
 
-    for (int i = 0; i < n; i++){
+    for (int i = 0; i < n; i++)
+    {
 
         if (!isVectorZero(mesh[i].an))
         {
-            shade = (1 - dotProduct(mesh[i].an, lightDir)) / 2;
+            shade = calculateLighting(mesh[i].a, mesh[i].an, lightDir, mesh, n);
             mesh[i].ac = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
-            shade = (1 - dotProduct(mesh[i].bn, lightDir)) / 2;
+            shade = calculateLighting(mesh[i].b, mesh[i].bn, lightDir, mesh, n);
             mesh[i].bc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
-            shade = (1 - dotProduct(mesh[i].cn, lightDir)) / 2;
+            shade = calculateLighting(mesh[i].c, mesh[i].cn, lightDir, mesh, n);
             mesh[i].cc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
         }
         else
         {
-            shade = (1 - dotProduct(calculateNormal(mesh[i]), lightDir)) / 2;
+            shade = calculateLighting(vecScalarDiv(vectorAdd(mesh[i].a, vectorAdd(mesh[i].b, mesh[i].c)), 3), calculateNormal(mesh[i]), lightDir, mesh, n);
             mesh[i].ac = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
             mesh[i].bc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
             mesh[i].cc = (SDL_Color){255 * shade, 255 * shade, 255 * shade, 0xff};
@@ -184,8 +247,6 @@ void renderMesh(tri *mesh, int n, Camera c, SDL_Texture *tex)
 
     tri triProj;
     float area;
-    vec3 lightDir = normalize((vec3){-1, -1, -0.5});
-    float shade;
 
     SDL_FPoint pts[3];
     SDL_Vertex vts[3];
@@ -215,7 +276,7 @@ void renderMesh(tri *mesh, int n, Camera c, SDL_Texture *tex)
         pts[1] = (SDL_FPoint){(toDraw[i].b.x + 1) * SCREEN_WIDTH / 2, (1 - toDraw[i].b.y) * SCREEN_HEIGHT / 2};
         pts[2] = (SDL_FPoint){(toDraw[i].c.x + 1) * SCREEN_WIDTH / 2, (1 - toDraw[i].c.y) * SCREEN_HEIGHT / 2};
 
-        vts[0] = (SDL_Vertex){pts[0], toDraw[i].ac, {toDraw[i].at.u,toDraw[i].at.v}};
+        vts[0] = (SDL_Vertex){pts[0], toDraw[i].ac, {toDraw[i].at.u, toDraw[i].at.v}};
         vts[1] = (SDL_Vertex){pts[1], toDraw[i].bc, {toDraw[i].bt.u, toDraw[i].bt.v}};
         vts[2] = (SDL_Vertex){pts[2], toDraw[i].cc, {toDraw[i].ct.u, toDraw[i].ct.v}};
 

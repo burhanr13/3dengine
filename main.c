@@ -70,6 +70,8 @@ void init()
     // nTris = loadObj("teapot.obj", mesh, BUFFER_SIZE);
 
     // nTris = loadObj("cube.obj", mesh, 20);
+
+    calculateVertexColors(mesh, nTris, (vec3){-1, -1, -1});
 }
 
 void close()
@@ -110,5 +112,5 @@ void updateCamera()
     cam.rot = vectorAdd(cam.rot,
                         vecScalarMult((vec3){(keys[SDL_SCANCODE_UP] - keys[SDL_SCANCODE_DOWN]),
                                              (keys[SDL_SCANCODE_RIGHT] - keys[SDL_SCANCODE_LEFT]), 0},
-                                      0.001));
+                                      0.002));
 }
