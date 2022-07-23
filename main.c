@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 }
 
 float f(float x,float y){
-    return x+y;
+    return x+2*y;
 }
 
 void init()
