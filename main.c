@@ -1,7 +1,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <math.h>
 
 #include "3dEngine.h"
+#include "3dGraph.h"
 
 #define BUFFER_SIZE 10000
 
@@ -55,6 +57,10 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+float f(float x,float y){
+    return x*y;
+}
+
 void init()
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -68,16 +74,18 @@ void init()
 
     tex = IMG_LoadTexture(renderer, "checker.png");
 
-    nTris = loadObj("newell_teaset/teapot.obj", mesh, BUFFER_SIZE);
-    for (int i = 0; i < nTris;i++){
-        mesh[i] = rotateTriangle(mesh[i], (vec3){0,-M_PI_2,0});
-    }
+    // nTris = loadObj("newell_teaset/teapot.obj", mesh, BUFFER_SIZE);
+    // for (int i = 0; i < nTris;i++){
+    //     mesh[i] = rotateTriangle(mesh[i], (vec3){0,-M_PI_2,0});
+    // }
 
     // nTris = loadObj("teapot.obj", mesh, BUFFER_SIZE);
 
     // nTris = loadObj("cube.obj", mesh, 20);
 
-    calculateVertexColors(mesh, nTris, (vec3){-1, -1, -1});
+    // calculateVertexColors(mesh, nTris, (vec3){-1, -1, -1});
+
+    nTris = makeMeshFromFunction(mesh, BUFFER_SIZE, f, 10, 50, (SDL_Color){150, 200, 255});
 }
 
 void close()
@@ -114,9 +122,9 @@ void updateCamera()
                                              (keys[SDL_SCANCODE_APOSTROPHE] - keys[SDL_SCANCODE_SLASH]),
                                              ((keys[SDL_SCANCODE_W] - keys[SDL_SCANCODE_S]) * cosf(cam.rot.y) +
                                               (keys[SDL_SCANCODE_D] - keys[SDL_SCANCODE_A]) * -sinf(cam.rot.y))},
-                                      0.01));
+                                      0.1));
     cam.rot = vectorAdd(cam.rot,
                         vecScalarMult((vec3){(keys[SDL_SCANCODE_UP] - keys[SDL_SCANCODE_DOWN]),
                                              (keys[SDL_SCANCODE_RIGHT] - keys[SDL_SCANCODE_LEFT]), 0},
-                                      0.002));
+                                      0.02));
 }

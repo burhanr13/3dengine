@@ -1,6 +1,8 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <SDL2/SDL.h>
+
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 500
 
@@ -17,6 +19,7 @@ typedef struct{
     vec2 at, bt, ct;
     vec3 an, bn, cn;
     SDL_Color ac, bc, cc;
+    int cull : 1;
 } tri;
 
 typedef struct{
@@ -29,10 +32,18 @@ vec3 vectorAdd(vec3 a, vec3 b);
 vec3 vectorSubtract(vec3 a, vec3 b);
 vec3 vecScalarMult(vec3 a, float b);
 
+float dotProduct(vec3 a, vec3 b);
+vec3 crossProduct(vec3 a, vec3 b);
+
+vec3 normalize(vec3 a);
+
 tri rotateTriangle(tri t, vec3 rot);
 
 tri transformTriangle(tri t, Camera c);
 tri projectTriangle(tri in, float a, float f);
+
+vec3 calculateNormal(tri t);
+
 void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
 
 void calculateVertexColors(tri *mesh, int n, vec3 lightDir);

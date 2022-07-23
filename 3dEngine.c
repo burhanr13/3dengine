@@ -260,7 +260,7 @@ void renderMesh(tri *mesh, int n, Camera c, SDL_Texture *tex)
         triProj = projectTriangle(transformTriangle(mesh[i], c), ASPECT_RATIO, c.f);
 
         area = signed2dArea(triProj);
-        if (area < 0 || triProj.a.z < 0 || triProj.b.z < 0 || triProj.c.z < 0)
+        if (area < 0 && triProj.cull || triProj.a.z < 0 || triProj.b.z < 0 || triProj.c.z < 0)
             continue;
 
         toDraw[drawCount] = triProj;
@@ -360,14 +360,14 @@ int loadObj(char *filename, tri *mesh, int n)
             }
             mesh[tcount] = (tri){v[inda - 1], v[indb - 1], v[indc - 1],
                                  vt[indta - 1], vt[indtb - 1], vt[indtc - 1],
-                                 vn[indna - 1], vn[indnb - 1], vn[indnc - 1]};
+                                 vn[indna - 1], vn[indnb - 1], vn[indnc - 1], 1};
             tcount++;
 
             if (nverts > 3)
             {
                 mesh[tcount] = (tri){v[inda - 1], v[indc - 1], v[indd - 1],
                                      vt[indta - 1], vt[indtc - 1], vt[indtd - 1],
-                                     vn[indna - 1], vn[indnc - 1], vn[indnd - 1]};
+                                     vn[indna - 1], vn[indnc - 1], vn[indnd - 1], 1};
                 tcount++;
             }
         }
