@@ -52,14 +52,21 @@ int main(int argc, char *argv[])
         fflush(stdout);
     }
 
+    writeMeshToObj(mesh, nTris, "graph.obj");
     close();
 
     return 0;
 }
 
 float f(float x,float y){
-    return x+2*y;
+    return sinf(10 * (x * x + y * y)) / 10;
 }
+
+vec3 R(float u,float v){
+    return (vec3){(10+4*sinf(v))*cosf(u),(10+4*sinf(v))*sinf(u),4*cosf(v)};
+}
+
+paramBounds b = {0, 2*M_PI, 40, 0, 2*M_PI, 40};
 
 void init()
 {
@@ -72,7 +79,7 @@ void init()
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-    tex = IMG_LoadTexture(renderer, "checker.png");
+    // tex = IMG_LoadTexture(renderer, "checker.png");
 
     // nTris = loadObj("newell_teaset/teapot.obj", mesh, BUFFER_SIZE);
     // for (int i = 0; i < nTris;i++){
@@ -85,7 +92,9 @@ void init()
 
     // calculateVertexColors(mesh, nTris, (vec3){-1, -1, -1});
 
-    nTris = makeMeshFromFunction(mesh, BUFFER_SIZE, f, 10, 50, (SDL_Color){150, 200, 255});
+    // nTris = makeMeshFromFunction(mesh, BUFFER_SIZE, f, 2, 50, (SDL_Color){150, 200, 255});
+
+    nTris = makeMeshFromParamFunction(mesh, BUFFER_SIZE, R, b, (SDL_Color){150, 200, 255});
 }
 
 void close()

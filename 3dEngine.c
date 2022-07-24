@@ -48,7 +48,14 @@ int isVectorZero(vec3 a)
 
 vec3 normalize(vec3 a)
 {
+    if(isVectorZero(a))
+        return a;
     return vecScalarMult(a, 1 / sqrtf(a.x * a.x + a.y * a.y + a.z * a.z));
+}
+
+vec3 vecSwapYZ(vec3 a)
+{
+    return (vec3){a.x, a.z, a.y};
 }
 
 vec3 vectorRotate(vec3 a, vec3 rot)

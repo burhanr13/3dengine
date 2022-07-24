@@ -35,7 +35,11 @@ vec3 vecScalarMult(vec3 a, float b);
 float dotProduct(vec3 a, vec3 b);
 vec3 crossProduct(vec3 a, vec3 b);
 
+int isVectorZero(vec3 a);
+
 vec3 normalize(vec3 a);
+
+vec3 vecSwapYZ(vec3 a);
 
 tri rotateTriangle(tri t, vec3 rot);
 
