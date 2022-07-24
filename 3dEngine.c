@@ -267,7 +267,12 @@ void renderMesh(tri *mesh, int n, Camera c, SDL_Texture *tex)
         triProj = projectTriangle(transformTriangle(mesh[i], c), ASPECT_RATIO, c.f);
 
         area = signed2dArea(triProj);
-        if (area < 0 && triProj.cull || triProj.a.z < 0 || triProj.b.z < 0 || triProj.c.z < 0)
+        if (area < 0 && triProj.cull ||
+            (triProj.a.z < 0 && triProj.b.z < 0 && triProj.c.z < 0) ||
+            (triProj.a.x < -1 && triProj.b.x < -1 && triProj.c.x < -1) ||
+            (triProj.a.y < -1 && triProj.b.y < -1 && triProj.c.y < -1) ||
+            (triProj.a.x > 1 && triProj.b.x > 1 && triProj.c.x > 1) ||
+            (triProj.a.y > 1 && triProj.b.y > 1 && triProj.c.y > 1))
             continue;
 
         toDraw[drawCount] = triProj;

@@ -94,7 +94,7 @@ int makeMeshFromParamFunction(tri *mesh, int n, vec3 (*f)(float, float), paramBo
             norm = calculateNormal(mesh[tcount]);
             norm = isVectorZero(norm) ? calculateNormal(mesh[tcount + 1]) : norm;
 
-            shade = ((1 - dotProduct(norm, normalize(lightDir))) * 0.375 + 0.25) *
+            shade = ((1 + dotProduct(norm, normalize(lightDir))) * 0.375 + 0.25) *
                     ((i % 2 == j % 2) ? 1 : 0.5);
             curCol = (SDL_Color){c.r * shade, c.g * shade, c.b * shade, 0xff};
 

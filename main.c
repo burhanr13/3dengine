@@ -25,6 +25,8 @@ Camera cam = {{0, 0, -10}, {0, 0, 0}, 2};
 int quit = 0;
 
 int frames = 0;
+Uint64 lastTime = 0;
+float elapsedTime;
 
 int main(int argc, char *argv[])
 {
@@ -48,6 +50,8 @@ int main(int argc, char *argv[])
         SDL_RenderPresent(renderer);
 
         frames++;
+        elapsedTime = SDL_GetTicks64() - lastTime;
+        lastTime = SDL_GetTicks64();
         printf("%.0f\n", 1000 * (float)frames / SDL_GetTicks64());
         fflush(stdout);
     }
@@ -66,7 +70,7 @@ vec3 R(float u,float v){
     return (vec3){(10+4*sinf(v))*cosf(u),(10+4*sinf(v))*sinf(u),4*cosf(v)};
 }
 
-paramBounds b = {0, 2*M_PI, 40, 0, 2*M_PI, 40};
+paramBounds b = {0, 2*M_PI, 50, 0, 2*M_PI, 50};
 
 void init()
 {
@@ -131,9 +135,9 @@ void updateCamera()
                                              (keys[SDL_SCANCODE_APOSTROPHE] - keys[SDL_SCANCODE_SLASH]),
                                              ((keys[SDL_SCANCODE_W] - keys[SDL_SCANCODE_S]) * cosf(cam.rot.y) +
                                               (keys[SDL_SCANCODE_D] - keys[SDL_SCANCODE_A]) * -sinf(cam.rot.y))},
-                                      0.1));
+                                      0.01*elapsedTime));
     cam.rot = vectorAdd(cam.rot,
                         vecScalarMult((vec3){(keys[SDL_SCANCODE_UP] - keys[SDL_SCANCODE_DOWN]),
                                              (keys[SDL_SCANCODE_RIGHT] - keys[SDL_SCANCODE_LEFT]), 0},
-                                      0.02));
+                                      0.002*elapsedTime));
 }
