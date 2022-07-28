@@ -268,7 +268,7 @@ void renderMesh(tri *mesh, int n, Camera c, SDL_Texture *tex)
 
         area = signed2dArea(triProj);
         if (area < 0 && triProj.cull ||
-            (triProj.a.z < 0 && triProj.b.z < 0 && triProj.c.z < 0) ||
+            (triProj.a.z < 0 || triProj.b.z < 0 || triProj.c.z < 0) ||
             (triProj.a.x < -1 && triProj.b.x < -1 && triProj.c.x < -1) ||
             (triProj.a.y < -1 && triProj.b.y < -1 && triProj.c.y < -1) ||
             (triProj.a.x > 1 && triProj.b.x > 1 && triProj.c.x > 1) ||
@@ -372,14 +372,14 @@ int loadObj(char *filename, tri *mesh, int n)
             }
             mesh[tcount] = (tri){v[inda - 1], v[indb - 1], v[indc - 1],
                                  vt[indta - 1], vt[indtb - 1], vt[indtc - 1],
-                                 vn[indna - 1], vn[indnb - 1], vn[indnc - 1], 1};
+                                 vn[indna - 1], vn[indnb - 1], vn[indnc - 1], .cull = 1};
             tcount++;
 
             if (nverts > 3)
             {
                 mesh[tcount] = (tri){v[inda - 1], v[indc - 1], v[indd - 1],
                                      vt[indta - 1], vt[indtc - 1], vt[indtd - 1],
-                                     vn[indna - 1], vn[indnc - 1], vn[indnd - 1], 1};
+                                     vn[indna - 1], vn[indnc - 1], vn[indnd - 1], .cull = 1};
                 tcount++;
             }
         }

@@ -85,7 +85,7 @@ void init()
 
     // tex = IMG_LoadTexture(renderer, "checker.png");
 
-    // nTris = loadObj("newell_teaset/teapot.obj", mesh, BUFFER_SIZE);
+    nTris = loadObj("newell_teaset/teapot.obj", mesh, BUFFER_SIZE);
     // for (int i = 0; i < nTris;i++){
     //     mesh[i] = rotateTriangle(mesh[i], (vec3){0,-M_PI_2,0});
     // }
@@ -94,11 +94,11 @@ void init()
 
     // nTris = loadObj("cube.obj", mesh, 20);
 
-    // calculateVertexColors(mesh, nTris, (vec3){-1, -1, -1});
+    calculateVertexColors(mesh, nTris, (vec3){-1, -1, -1});
 
     // nTris = makeMeshFromFunction(mesh, BUFFER_SIZE, f, 2, 50, (SDL_Color){150, 200, 255});
 
-    nTris = makeMeshFromParamFunction(mesh, BUFFER_SIZE, R, b, (SDL_Color){150, 200, 255});
+    // nTris = makeMeshFromParamFunction(mesh, BUFFER_SIZE, R, b, (SDL_Color){150, 200, 255});
 }
 
 void close()
