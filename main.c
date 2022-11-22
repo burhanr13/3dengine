@@ -8,7 +8,7 @@
 #define BUFFER_SIZE 10000
 
 void init();
-void close();
+void end();
 void handleEvent(SDL_Event *e);
 void updateCamera();
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     }
 
     writeMeshToObj(mesh, nTris, "graph.obj");
-    close();
+    end();
 
     return 0;
 }
@@ -101,7 +101,7 @@ void init()
     // nTris = makeMeshFromParamFunction(mesh, BUFFER_SIZE, R, b, (SDL_Color){150, 200, 255});
 }
 
-void close()
+void end()
 {
     SDL_DestroyWindow(window);
     window = NULL;
